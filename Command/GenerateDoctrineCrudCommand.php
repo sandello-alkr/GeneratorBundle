@@ -40,7 +40,7 @@ class GenerateDoctrineCrudCommand extends GenerateDoctrineCommand
             ->setDefinition(array(
                 new InputOption('entity', '', InputOption::VALUE_REQUIRED, 'The entity class name to initialize (shortcut notation)'),
                 new InputOption('route-prefix', '', InputOption::VALUE_REQUIRED, 'The route prefix'),
-                new InputOption('with-write', '', InputOption::VALUE_NONE, 'Whether or not to generate create, new and delete actions'),
+                new InputOption('with-show', '', InputOption::VALUE_NONE, 'Whether or not to generate show action'),
                 new InputOption('format', '', InputOption::VALUE_REQUIRED, 'Use the format for configuration files (php, xml, yml, or annotation)', 'annotation'),
                 new InputOption('overwrite', '', InputOption::VALUE_NONE, 'Do not stop the generation if crud controller already exist, thus overwriting all generated files'),
             ))
@@ -95,7 +95,7 @@ EOT
 
         $format = Validators::validateFormat($input->getOption('format'));
         $prefix = $this->getRoutePrefix($input, $entity);
-        $withWrite = $input->getOption('with-write');
+        $withShow = $input->getOption('with-write');
         $forceOverwrite = $input->getOption('overwrite');
 
         $dialog->writeSection($output, 'CRUD generation');
@@ -105,7 +105,7 @@ EOT
         $bundle      = $this->getContainer()->get('kernel')->getBundle($bundle);
 
         $generator = $this->getGenerator($bundle);
-        $generator->generate($bundle, $entity, $metadata[0], $format, $prefix, $withWrite, $forceOverwrite);
+        $generator->generate($bundle, $entity, $metadata[0], $format, $prefix, $withShow, $forceOverwrite);
 
         $output->writeln('Generating the CRUD code: <info>OK</info>');
 
@@ -113,10 +113,10 @@ EOT
         $runner = $dialog->getRunner($output, $errors);
 
         // form
-        if ($withWrite) {
+        // if ($withShow) {
             $this->generateForm($bundle, $entity, $metadata);
             $output->writeln('Generating the Form code: <info>OK</info>');
-        }
+        // }
 
         // routing
         if ('annotation' != $format) {
@@ -149,15 +149,14 @@ EOT
         list($bundle, $entity) = $this->parseShortcutNotation($entity);
 
         // write?
-        $withWrite = $input->getOption('with-write') ?: false;
+        $withShow = $input->getOption('with-write') ?: false;
         $output->writeln(array(
             '',
-            'By default, the generator creates two actions: list and show.',
-            'You can also ask it to generate "write" actions: new, update, and delete.',
+            'By default, the generator creates all actions accept show.',
             '',
         ));
-        $withWrite = $dialog->askConfirmation($output, $dialog->getQuestion('Do you want to generate the "write" actions', $withWrite ? 'yes' : 'no', '?'), $withWrite);
-        $input->setOption('with-write', $withWrite);
+        $withShow = $dialog->askConfirmation($output, $dialog->getQuestion('Do you want to generate the "show" action', $withShow ? 'yes' : 'no', '?'), $withShow);
+        $input->setOption('with-show', $withShow);
 
         // format
         $format = $input->getOption('format');
